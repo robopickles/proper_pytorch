@@ -1,53 +1,44 @@
 package com.robopickles.proper_pytorch
 import android.graphics.Bitmap
-import android.graphics.Bitmap.Config
 import android.graphics.Color
 import android.util.Log
 import io.mockk.*
-import io.mockk.impl.annotations.MockK
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import java.lang.Exception
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertTrue
-
-inline fun <T> forceType(fn: T)  = fn
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
 
 
 class SampleTest {
-
-    @MockK(relaxUnitFun = true)
-    lateinit var bm: Bitmap
-
-    @BeforeTest
+    @BeforeEach
     fun setUp() {
         MockKAnnotations.init(this)
-        mockkStatic(Bitmap::class)
 
-        every { Bitmap.createBitmap(any(), any(), any()) } returns bm
-        every { Bitmap.createScaledBitmap(any(), any(), any(), any()) } returns bm
-
-        every { bm.compress(any(), any(), any())} returns true
-
-        mockkStatic(Color::class)
-        every { Color.argb(any<Int>(), any(), any(), any()) } returns 1
-
-        mockkStatic(Log::class)
-        every { Log.v(any(), any()) } returns 0
     }
 
     companion object {
-        @BeforeClass
-        fun rrr() {
-            throw Exception()
+        @BeforeAll
+        @JvmStatic
+        fun setUpClass() {
+            mockkStatic(Bitmap::class)
+            mockkStatic(Color::class)
+            mockkStatic(Log::class)
+            val bmMock = mockk<Bitmap>(relaxUnitFun = true)
+            every { Bitmap.createScaledBitmap(any(), any(), any(), any()) } returns bmMock
+            every { Bitmap.createBitmap(any(), any(), any()) } returns bmMock
+            every { bmMock.compress(any(), any(), any())} returns true
+
+            every { Color.argb(any<Int>(), any(), any(), any()) } returns 1
+            every { Log.v(any(), any()) } returns 0
         }
 
-        @AfterClass
+        @AfterAll
+        @JvmStatic
         fun tearDownClass() {
             unmockkStatic(Bitmap::class)
-            assert(false)
-            throw Exception()
+            unmockkStatic(Color::class)
+            unmockkStatic(Log::class)
         }
     }
 
@@ -57,7 +48,7 @@ class SampleTest {
         val a = HeatmapHandler()
         val img: List<Float> = (0..256).map{ x -> x.toFloat()}
         a.sliceToHeatmap(img, 8)
-        verify { Bitmap.createBitmap(8, 8, any()) }
+        verify (atMost = 1) { Bitmap.createBitmap(8, 8, any()) }
     }
 
     @Test
@@ -65,6 +56,7 @@ class SampleTest {
         val a = HeatmapHandler()
         val img: List<Float> = (256..1024).map{ x -> x.toFloat()}
         a.sliceToHeatmap(img, 16)
-        verify { Bitmap.createBitmap(16, 16, any()) }
+        verify (atMost = 1) { Bitmap.createBitmap(16, 16, any()) }
+
     }
 }
